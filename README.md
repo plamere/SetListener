@@ -4,7 +4,7 @@ This is the source for a web app called The Set Listener. The app
 creates a Spotify playlist for your favorite artist's most recent
 show. The app uses the Setlist.fm API and the Spotify API.
 
-The app is online at [The Set Listener](http://static.echonest.com/SetListner)
+The app is online at [The Set Listener](http://static.echonest.com/SetListener)
 
 <img src="http://static.echonest.com/SetListener/ss.png" width=600>
 
