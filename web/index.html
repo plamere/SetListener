@@ -98,8 +98,10 @@ function searchSetlist(artistName, callback) {
 
 function searchForSpotifySong(artist, title, callback) {
     var url = 'https://api.spotify.com/v1/search?type=track&q=';
-    var qa = 'artist:' + '"' + artist + '"';
-    var qt = 'track:' + '"' + title + '"';
+    var qa = 'artist:' + stripPunct(artist);
+    var qt = 'track:' + stripPunct(title);
+    //var qa = 'artist:' + '"' + stripPunct(artist) + '"';
+    //var qt = 'track:' + '"' + stripPunct(title) + '"';
     var qurl = url + qa + ' ' + qt;
 
     $.getJSON(qurl,  
@@ -110,6 +112,13 @@ function searchForSpotifySong(artist, title, callback) {
         callback(null);
     });
 }
+
+function stripPunct(s)  {
+    s = s.replace(/[\.,-\/#!$%\^&\*;:{}=\-_`~()]/g," ");
+    s = s.replace(/\s{2,}/g," ");
+    return s;
+}
+
 
 function getArtistEvents(artist, callback) {
     var url = 'http://api.setlist.fm/rest/0.1/artist/' + artist['@mbid'] + '/setlists.json';
@@ -236,6 +245,7 @@ function savePlaylist() {
                 var tids = [];
                 _.each(tracks, function(track) {
                     if (track) {
+                        console.log(track.name);
                         tids.push(track.uri);
                     }
                 });
