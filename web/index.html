@@ -1,0 +1,340 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title> The Set Listener</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <link type="text/css" href="styles.css" rel="stylesheet" />
+     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+     <script src="lib/underscore-min.js"></script>
+    <link href="dist/sp-bootstrap.min.css" rel="stylesheet" media="screen">
+</head>
+
+<body>
+
+    <div class="navbar navbar-default navbar-fixed-top" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <a class="navbar-brand" href="#"><span>The&nbsp;Set&nbsp;Listener</span></a>
+        </div>
+        <div class="collapse navbar-collapse">
+          <ul id="options" class="nav navbar-nav navbar-right">
+              <li><a class="option" 
+                href="http://musicmachinery.com/2014/06/24/the-set-listener/" 
+                id='show-about'>About</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+
+<div id="search" class="hero-unit">
+   <div class="container">
+    <h1> The Set Listener</h1>
+        <p class="lead">Create a Spotify playlist for your favorite artist's most recent show</p>
+        <div id="search" class="form-inline">
+            <input type="search" class="form-control input-large" id="source"
+            placeholder="artist name" value="">
+            <span class="xform-control">
+                <button class="btn btn-info btn-large" id='go' type="button">  Search </button>
+            </span>
+        </div>
+        <div id="info"> </div>
+    </div>
+</div>
+
+
+<div id="about" class="reg-unit">
+  <div class="container">
+        <h1> About The Set Listener</h1>
+        The Set Listener creates
+  </div>
+</div>
+
+<div id="main" class="container">
+    <h2> <a  id='show-title'> </a> </h2>
+    <hr>
+        <button class="btn btn-info btn-large" id='save' type="button">
+            Save this playlist to Spotify
+        </button>
+    <hr>
+    <div id="song-list"> </div>
+    <hr>
+</div>
+
+<div id="footer">
+  <div class="container">
+  <small>
+    <p class="muted credit">Created by <a href="http://twitter.com/plamere">@plamere</a>. 
+    Powered by <a href="http://spotify.com">Spotify</a>,
+    <a href="http://setlist.fm">Setlist.fm</a> 
+    and <a href="http://the.echonest.com">The Echo Nest</a>. 
+    </p>
+  </small>
+  </div>
+</div>
+
+</div>
+
+<script>
+"use strict";
+
+var fwdQuery = 'http://localhost:8414/SetlistServer/query';
+var fwdQuery = 'http://ec2-54-227-6-186.compute-1.amazonaws.com/SetlistServer/query';
+var curSongs = null;
+var curArtist = null;
+var curTitle = '';
+
+
+function searchSetlist(artistName, callback) {
+    var url = 'http://api.setlist.fm/rest/0.1/search/artists.json?artistName=' + artistName;
+    $.getJSON(fwdQuery, { q:url})
+        .success(function(data) {
+            callback(data);
+        })
+        .error(function(data) {
+            callback(data);
+        });
+}
+
+function searchForSpotifySong(artist, title, callback) {
+    var url = 'https://api.spotify.com/v1/search?type=track&q=';
+    var qa = 'artist:' + '"' + artist + '"';
+    var qt = 'track:' + '"' + title + '"';
+    var qurl = url + qa + ' ' + qt;
+
+    $.getJSON(qurl,  
+        function(data) {
+            callback(data);
+        }
+    ).error(function() {
+        callback(null);
+    });
+}
+
+function getArtistEvents(artist, callback) {
+    var url = 'http://api.setlist.fm/rest/0.1/artist/' + artist['@mbid'] + '/setlists.json';
+    $.getJSON(fwdQuery, { q:url})
+        .success(function(data) {
+            info("");
+            callback(data);
+        })
+        .error(function(data) {
+            error("Can't find any recent concerts for " + artist["@name"]);
+        });
+}
+
+function searchForArtist() {
+    var artistName = $("#source").val();
+    $("#main").hide();
+    info("Searching for " + artistName);
+    searchSetlist(artistName, function(data) {
+        if (data && data['artists']) {
+            var artist = null;
+            if (data['artists']['@total'] > 1) {
+                var artists = data['artists']['artist']
+                artist = artists[0];
+                for (var i = 0; i < artists.length; i++) {
+                    var tartist = artists[i];
+                    if (artistName.toLowerCase() === tartist["@name"].toLowerCase()) {
+                        artist = tartist;
+                        break;
+                    } else {
+                        if (tartist["@name"].length < artist["@name"].length) {
+                            artist = tartist;
+                        }
+                    }
+                }
+            } else if (data['artists']['@total'] > 0) {
+                artist = data['artists']['artist'];
+            } else {
+                error("Can't find artist " + artistName);
+            }
+            if (artist) {
+                getArtistEvents(artist, function(data) {
+                    showEvents(artist, data);
+                });
+            }
+        } else {
+            error("Can't find artist " + artistName);
+        }
+    });
+}
+
+
+function showEvents(artist, setdata) {
+    var show = getBestShow(setdata);
+    if (show) {
+        $("#main").show();
+        var title = getTitleFromShow(artist, show);
+        var songs = getSongNamesFromShow(show);
+        var url = show.url;
+        $("#show-title").text(title).attr('href', url);
+        curTitle = title;
+
+        var list = $("#song-list");
+        list.empty();
+        _.each(songs, function(s) {
+            var li = $("<div>").text(s);
+            list.append(li);
+        });
+        curArtist = artist;
+        curSongs = songs;
+    } else {
+        error("Can't find any shows with songs for " + artist["@name"]);
+    }
+}
+
+function getTitleFromShow(artist, show) {
+    return artist["@name"] + " at " + show.venue["@name"] + " on " + 
+        parseEventDate(show["@eventDate"]);
+}
+
+function parseEventDate(date) {
+    var fields = date.split('-');
+    if (fields.length == 3) {
+        var year = (fields[2]);
+        var month = (fields[1]);
+        var day =  (fields[0]);
+        return year + '-' + month + '-' + day;
+    } else {
+        return date;
+    }
+}
+
+
+
+function getSongNamesFromShow(show) {
+    var titles = [];
+    if (isArray(show.sets.set)) {
+        _.each(show.sets.set, function(set) {
+            _.each(set.song, function(s) {
+                var title = s["@name"];
+                if (title && title.length > 0) {
+                    titles.push(title);
+                }
+            });
+        });
+    } else if (typeof show.sets === 'object' && 'set' in show.sets) {
+        _.each(show.sets.set.song, function(s) {
+            var title = s["@name"];
+            if (title && title.length > 0) {
+                titles.push(title);
+            }
+        });
+    }
+    return titles;
+}
+
+function savePlaylist() {
+    var remaining = curSongs.length;
+    var tracks = [];
+    _.each(curSongs, function(song, which) {
+        searchForSpotifySong(curArtist['@name'], song, function(ssong) {
+            remaining--;
+            tracks[which] = ssong.tracks.items[0];
+            if (remaining <= 0) {
+                var tids = [];
+                _.each(tracks, function(track) {
+                    if (track) {
+                        tids.push(track.uri);
+                    }
+                });
+
+                saveTrackToPlaylist(curTitle, tids);
+            }
+        });
+    });
+}
+
+function saveTrackToPlaylist(title, spotifyTracks) {
+    var client_id = '39474be678754f298dee643a3dc0a31d';
+    var redirect_uri = 'http://static.echonest.com/SetListener/callback.html';
+
+    var url = 'https://accounts.spotify.com/authorize?client_id=' + client_id +
+        '&response_type=token' +
+        '&scope=playlist-modify-private' +
+        '&redirect_uri=' + encodeURIComponent(redirect_uri);
+    localStorage.setItem('createplaylist-tracks', JSON.stringify(spotifyTracks));
+    localStorage.setItem('createplaylist-name', title);
+    var w = window.open(url, 'asdf', 'WIDTH=400,HEIGHT=500');
+}
+
+function isArray(obj) {
+    return Object.prototype.toString.call( obj ) === '[object Array]' 
+}
+
+function getBestShow(setData) {
+    for (var i = 0; i < setData.setlists.setlist.length; i++) {
+        var setList = setData.setlists.setlist[i];
+        if (getSongNamesFromShow(setList).length > 0) {
+            return setList;
+        }
+    }
+    return null;
+}
+
+function error(msg) {
+    info(msg);
+}
+
+function info(msg) {
+    $("#info").text(msg);
+}
+
+$(document).ready(
+    function() {
+        $("#source").keyup( 
+            function(event) {
+                if (event.keyCode == 13) {
+                    searchForArtist();
+                }
+            }
+        );
+        $("#go").on('click', function() {
+            searchForArtist();
+        });
+        $("#save").on('click', function() {
+            savePlaylist();
+        });
+    }
+);
+
+</script>
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-3675615-11']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type =
+'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' :
+'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0];
+s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-3675615-11']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type =
+'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' :
+'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0];
+s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+
+</body>
+</html>
