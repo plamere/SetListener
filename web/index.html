@@ -120,7 +120,7 @@ function stripPunct(s)  {
 }
 
 
-function getArtistEvents(artist, callback) {
+function getArtistEvents(artistName, artist, callback) {
     var url = 'http://api.setlist.fm/rest/0.1/artist/' + artist['@mbid'] + '/setlists.json';
     $.getJSON(fwdQuery, { q:url})
         .success(function(data) {
@@ -128,7 +128,7 @@ function getArtistEvents(artist, callback) {
             callback(data);
         })
         .error(function(data) {
-            error("Can't find any recent concerts for " + artist["@name"]);
+            error("Can't find any recent concerts for " + artistName);
         });
 }
 
@@ -159,7 +159,7 @@ function searchForArtist() {
                 error("Can't find artist " + artistName);
             }
             if (artist) {
-                getArtistEvents(artist, function(data) {
+                getArtistEvents(artistName, artist, function(data) {
                     showEvents(artist, data);
                 });
             }
@@ -250,7 +250,11 @@ function savePlaylist() {
                     }
                 });
 
-                saveTrackToPlaylist(curTitle, tids);
+                if (tids.length > 0) {
+                    saveTrackToPlaylist(curTitle, tids);
+                } else {
+                    error("Sorry, can't find those tracks in Spotify");
+                }
             }
         });
     });

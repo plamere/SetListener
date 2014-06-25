@@ -11,16 +11,18 @@ import requests
 class SetlistServer(object):
     def __init__(self, config):
         self.production_mode = config.getboolean('settings', 'production')
+        self.total_calls = 0
 
 
-    @cherrypy.tools.caching(delay=3600)
+    @cherrypy.tools.caching(delay=3600 * 24)
     def query(self, q):
         cherrypy.response.headers["Access-Control-Allow-Origin"] = "*"
         cherrypy.response.headers['Content-Type']= 'application/json'
 
         if 'setlist.fm' in q:
             r = requests.get(q)
-            print "calling setlist.fm"
+            print "calling setlist.fm", self.total_calls
+            self.total_calls += 1
             return r.text.encode('utf8')
         else:
             return '{}'
