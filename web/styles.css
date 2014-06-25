@@ -17,6 +17,7 @@
 #source {
     height:40px;
     padding:10px;
+    margin:10px;
     width:250px;
    -webkit-box-sizing: border-box;
    -moz-box-sizing: border-box;
@@ -50,7 +51,6 @@
     margin-top:20px;
     margin-left:auto;
     margin-right:auto;
-    width:800px;
     text-align:center;
     display:none;
     font-size:22px;
