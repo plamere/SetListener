@@ -159,6 +159,7 @@ function searchForArtist() {
                 error("Can't find artist " + artistName);
             }
             if (artist) {
+                info("Getting recent shows for " + artistName);
                 getArtistEvents(artistName, artist, function(data) {
                     showEvents(artist, data);
                 });
