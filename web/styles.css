@@ -1,13 +1,18 @@
 .hero-unit {
   margin-top:66px;
-  padding-bottom:30px;
   color: #fff;
   background-color: #84BD00;
   text-align:center;
 }
 
 .hero-unit h1 {
-    font-size:64px;
+    font-size:40px;
+}
+
+@media (min-width: 768px) {
+  .hero-unit h1 {
+    font-size: 64px;
+  }
 }
 
 #about h1 {
@@ -68,11 +73,9 @@
 }
 
 #info {
-    margin-top:20px;
-    margin-left:10px;
+    margin:20px 0;
     width:100%;
     text-align:center;
-    margin-bottom:10px;
     height:32px;
     font-size:24px;
 }

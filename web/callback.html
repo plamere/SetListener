@@ -1,5 +1,6 @@
 <html>
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
         <link href="dist/sp-bootstrap.min.css" rel="stylesheet" media="screen">
 <!--    <script type="text/javascript" src="http://code.jquery.com/jquery-1.11.1.js"></script> -->
 <script type="text/javascript" src=" https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
@@ -91,7 +92,7 @@ function addTracksToPlaylist(username, playlist, tracks, start, callback) {
                     callback('good');
             } else {
                 status(Math.round(100 * start / tracks.length)  + "% saved");
-                addTracksToPlaylist(username, playlist, tracks, 
+                addTracksToPlaylist(username, playlist, tracks,
                     start + maxTracksPerPlaylistAdd, callback);
             }
         },
