@@ -12,23 +12,21 @@ var g_tracks = [];
 var g_artist = '';
 
 function stripPunct(s)  {
-        s = s.replace(/[\.,-\/#!$%\^&\*;:{}=\-_`~()]/g," ");
-        s = s.replace(/\s{2,}/g," ");
-        return s;
+    s = s.replace(/[\.,-\/#!$%\^&\*;:{}=\-_`~()]/g," ");
+    s = s.replace(/\s{2,}/g," ");
+    return s;
 }
 
 function searchForSpotifySong(artist, title, callback) {
     var url = 'https://api.spotify.com/v1/search?type=track&q=';
     var qa = 'artist:' + stripPunct(artist);
     var qt = 'track:' + stripPunct(title);
-    //var qa = 'artist:' + '"' + stripPunct(artist) + '"';
-    //var qt = 'track:' + '"' + stripPunct(title) + '"';
     var qurl = url + qa + ' ' + qt;
 
     $.getJSON(qurl,
-            function(data) {
-                    callback(data);
-            }
+        function(data) {
+                callback(data);
+        }
     ).error(function() {
             callback(null);
     });
@@ -78,6 +76,7 @@ function addTracksToPlaylist(username, playlist, tracks, start, callback) {
         '/playlists/' + playlist +
         '/tracks';
         var thisTracks = tracks.slice(start, start + maxTracksPerPlaylistAdd);
+
     $.ajax(url, {
         type: 'POST',
         data: JSON.stringify(thisTracks),
@@ -88,12 +87,13 @@ function addTracksToPlaylist(username, playlist, tracks, start, callback) {
             'Content-Type': 'application/json'
         },
         success: function(r) {
-                        if (start + maxTracksPerPlaylistAdd >= tracks.length) {
-                                callback('good');
-                        } else {
-                                status(Math.round(100 * start / tracks.length)  + "% saved");
-                                addTracksToPlaylist(username, playlist, tracks, start + maxTracksPerPlaylistAdd, callback);
-                        }
+            if (start + maxTracksPerPlaylistAdd >= tracks.length) {
+                    callback('good');
+            } else {
+                status(Math.round(100 * start / tracks.length)  + "% saved");
+                addTracksToPlaylist(username, playlist, tracks, 
+                    start + maxTracksPerPlaylistAdd, callback);
+            }
         },
         error: function(r, status, err) {
             callback(null);
@@ -102,15 +102,16 @@ function addTracksToPlaylist(username, playlist, tracks, start, callback) {
 }
 
 function status(msg) {
-        $("#status").text(msg);
+    $("#status").text(msg);
 }
 
 function doit() {
     // parse hash
     var hash = location.hash.replace(/#/g, '');
     var all = hash.split('&');
-        var maxTracks = 10;
+    var maxTracks = 10;
     var args = {};
+
     all.forEach(function(keyvalue) {
         var idx = keyvalue.indexOf('=');
         var key = keyvalue.substring(0, idx);
@@ -129,47 +130,48 @@ function doit() {
 
     var remaining = g_tracks.length;
     var tracks = [];
-    _.each(g_tracks, function(song, which) {
-            searchForSpotifySong(g_artist, song, function(ssong) {
-                    remaining--;
-                    tracks[which] = ssong.tracks.items[0];
-                    if (remaining <= 0) {
-                            var tids = [];
-                            _.each(tracks, function(track) {
-                                    if (track) {
-                                            console.log(track.name);
-                                            tids.push(track.uri);
-                                    }
-                            });
 
-                            if (tids.length > 0) {
-                                    onTracksFetched(tids);
-                            } else {
-                                    error("Sorry, can't find those tracks in Spotify");
-                            }
+    _.each(g_tracks, function(song, which) {
+        searchForSpotifySong(g_artist, song, function(ssong) {
+            remaining--;
+            tracks[which] = ssong.tracks.items[0];
+            if (remaining <= 0) {
+                var tids = [];
+                _.each(tracks, function(track) {
+                    if (track) {
+                        console.log(track.name);
+                        tids.push(track.uri);
                     }
-            });
+                });
+
+                if (tids.length > 0) {
+                    onTracksFetched(tids);
+                } else {
+                    error("Sorry, can't find those tracks in Spotify");
+                }
+            }
+        });
     });
 
     function onTracksFetched(tracks) {
         getUsername(function(username) {
             createPlaylist(username, g_name, function(playlist) {
-                            if (playlist) {
-                                    addTracksToPlaylist(username, playlist, tracks, 0, function(ok) {
-                                            if (ok) {
-                                                    $('#playlistlink').attr('href', 'spotify:user:'+username+':playlist:'+playlist);
-                                                    $("#title").text(g_name);
-                                                    $('#done').show();
-                                                    $('#creating').hide();
-                                            } else {
-                                                    $('#error').show();
-                                                    $('#creating').hide();
-                                            }
-                                    });
-                            } else {
-                                    $("#error").show();
-                                    $('#creating').hide();
-                            }
+                if (playlist) {
+                    addTracksToPlaylist(username, playlist, tracks, 0, function(ok) {
+                        if (ok) {
+                            $('#playlistlink').attr('href', 'spotify:user:'+username+':playlist:'+playlist);
+                            $("#title").text(g_name);
+                            $('#done').show();
+                            $('#creating').hide();
+                        } else {
+                            $('#error').show();
+                            $('#creating').hide();
+                        }
+                    });
+                } else {
+                    $("#error").show();
+                    $('#creating').hide();
+                }
         });
     });
     }
@@ -181,28 +183,30 @@ function doit() {
     body {
         background-color: #333;
         color: #fff;
-                text-align:center;
-                font-size:24px;
+        text-align:center;
+        font-size:24px;
     }
 
     .site-wrapper {
-                margin:20px;
+        margin:20px;
     }
 
 
-        #info {
-                margin:20px;
-                margin-top:30px;
-                margin-bottom:40px;
-        }
+    #info {
+        margin:20px;
+        margin-top:30px;
+        margin-bottom:40px;
+    }
+
 </style>
 </head>
+
 <body onload="doit()">
     <div class="container site-wrapper">
         <div class="site-wrapper-inner">
             <div id="creating" style="text-align: center;">
                 <h1>Creating playlist...</h1>
-                                <div id="status" style="text-align: center;"> </div>
+                <div id="status" style="text-align: center;"> </div>
             </div>
             <div id="done" style="display: none;">
                 <h1 class='text-success' >Playlist saved to Spotify</h1>
