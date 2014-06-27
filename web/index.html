@@ -18,8 +18,8 @@
         </div>
         <div class="collapse navbar-collapse">
           <ul id="options" class="nav navbar-nav navbar-right">
-              <li><a class="option" 
-                href="http://musicmachinery.com/2014/06/24/the-set-listener/" 
+              <li><a class="option"
+                href="http://musicmachinery.com/2014/06/24/the-set-listener/"
                 id='show-about'>About</a></li>
           </ul>
         </div>
@@ -64,10 +64,10 @@
 <div id="footer">
   <div class="container">
   <small>
-    <p class="muted credit">Created by <a href="http://twitter.com/plamere">@plamere</a>. 
+    <p class="muted credit">Created by <a href="http://twitter.com/plamere">@plamere</a>.
     Powered by <a href="http://spotify.com">Spotify</a>,
-    <a href="http://setlist.fm">Setlist.fm</a> 
-    and <a href="http://the.echonest.com">The Echo Nest</a>. 
+    <a href="http://setlist.fm">Setlist.fm</a>
+    and <a href="http://the.echonest.com">The Echo Nest</a>.
     </p>
   </small>
   </div>
@@ -95,30 +95,6 @@ function searchSetlist(artistName, callback) {
             callback(data);
         });
 }
-
-function searchForSpotifySong(artist, title, callback) {
-    var url = 'https://api.spotify.com/v1/search?type=track&q=';
-    var qa = 'artist:' + stripPunct(artist);
-    var qt = 'track:' + stripPunct(title);
-    //var qa = 'artist:' + '"' + stripPunct(artist) + '"';
-    //var qt = 'track:' + '"' + stripPunct(title) + '"';
-    var qurl = url + qa + ' ' + qt;
-
-    $.getJSON(qurl,  
-        function(data) {
-            callback(data);
-        }
-    ).error(function() {
-        callback(null);
-    });
-}
-
-function stripPunct(s)  {
-    s = s.replace(/[\.,-\/#!$%\^&\*;:{}=\-_`~()]/g," ");
-    s = s.replace(/\s{2,}/g," ");
-    return s;
-}
-
 
 function getArtistEvents(artistName, artist, callback) {
     var url = 'http://api.setlist.fm/rest/0.1/artist/' + artist['@mbid'] + '/setlists.json';
@@ -195,7 +171,7 @@ function showEvents(artist, setdata) {
 }
 
 function getTitleFromShow(artist, show) {
-    return artist["@name"] + " at " + show.venue["@name"] + " on " + 
+    return artist["@name"] + " at " + show.venue["@name"] + " on " +
         parseEventDate(show["@eventDate"]);
 }
 
@@ -236,46 +212,24 @@ function getSongNamesFromShow(show) {
 }
 
 function savePlaylist() {
-    var remaining = curSongs.length;
-    var tracks = [];
-    _.each(curSongs, function(song, which) {
-        searchForSpotifySong(curArtist['@name'], song, function(ssong) {
-            remaining--;
-            tracks[which] = ssong.tracks.items[0];
-            if (remaining <= 0) {
-                var tids = [];
-                _.each(tracks, function(track) {
-                    if (track) {
-                        console.log(track.name);
-                        tids.push(track.uri);
-                    }
-                });
-
-                if (tids.length > 0) {
-                    saveTrackToPlaylist(curTitle, tids);
-                } else {
-                    error("Sorry, can't find those tracks in Spotify");
-                }
-            }
-        });
-    });
+    localStorage.setItem('createplaylist-tracks', JSON.stringify(curSongs));
+    localStorage.setItem('createplaylist-name', curTitle);
+    localStorage.setItem('createplaylist-artist', curArtist['@name']);
+    loginWithSpotify();
 }
 
-function saveTrackToPlaylist(title, spotifyTracks) {
+function loginWithSpotify() {
     var client_id = '39474be678754f298dee643a3dc0a31d';
-    var redirect_uri = 'http://static.echonest.com/SetListener/callback.html';
-
+-   var redirect_uri = 'http://static.echonest.com/SetListener/callback.html';
     var url = 'https://accounts.spotify.com/authorize?client_id=' + client_id +
         '&response_type=token' +
         '&scope=playlist-modify-private' +
         '&redirect_uri=' + encodeURIComponent(redirect_uri);
-    localStorage.setItem('createplaylist-tracks', JSON.stringify(spotifyTracks));
-    localStorage.setItem('createplaylist-name', title);
     var w = window.open(url, 'asdf', 'WIDTH=400,HEIGHT=500');
 }
 
 function isArray(obj) {
-    return Object.prototype.toString.call( obj ) === '[object Array]' 
+    return Object.prototype.toString.call( obj ) === '[object Array]'
 }
 
 function getBestShow(setData) {
@@ -298,7 +252,7 @@ function info(msg) {
 
 $(document).ready(
     function() {
-        $("#source").keyup( 
+        $("#source").keyup(
             function(event) {
                 if (event.keyCode == 13) {
                     searchForArtist();
