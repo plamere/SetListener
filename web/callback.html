@@ -1,7 +1,7 @@
 <html>
 <head>
-		<link href="dist/sp-bootstrap.min.css" rel="stylesheet" media="screen">
-<!--	<script type="text/javascript" src="http://code.jquery.com/jquery-1.11.1.js"></script> -->
+        <link href="dist/sp-bootstrap.min.css" rel="stylesheet" media="screen">
+<!--    <script type="text/javascript" src="http://code.jquery.com/jquery-1.11.1.js"></script> -->
 <script type="text/javascript" src=" https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
 <script src="lib/underscore-min.js"></script>
 <script>
@@ -12,212 +12,212 @@ var g_tracks = [];
 var g_artist = '';
 
 function stripPunct(s)  {
-		s = s.replace(/[\.,-\/#!$%\^&\*;:{}=\-_`~()]/g," ");
-		s = s.replace(/\s{2,}/g," ");
-		return s;
+        s = s.replace(/[\.,-\/#!$%\^&\*;:{}=\-_`~()]/g," ");
+        s = s.replace(/\s{2,}/g," ");
+        return s;
 }
 
 function searchForSpotifySong(artist, title, callback) {
-	var url = 'https://api.spotify.com/v1/search?type=track&q=';
-	var qa = 'artist:' + stripPunct(artist);
-	var qt = 'track:' + stripPunct(title);
-	//var qa = 'artist:' + '"' + stripPunct(artist) + '"';
-	//var qt = 'track:' + '"' + stripPunct(title) + '"';
-	var qurl = url + qa + ' ' + qt;
+    var url = 'https://api.spotify.com/v1/search?type=track&q=';
+    var qa = 'artist:' + stripPunct(artist);
+    var qt = 'track:' + stripPunct(title);
+    //var qa = 'artist:' + '"' + stripPunct(artist) + '"';
+    //var qt = 'track:' + '"' + stripPunct(title) + '"';
+    var qurl = url + qa + ' ' + qt;
 
-	$.getJSON(qurl,
-			function(data) {
-					callback(data);
-			}
-	).error(function() {
-			callback(null);
-	});
+    $.getJSON(qurl,
+            function(data) {
+                    callback(data);
+            }
+    ).error(function() {
+            callback(null);
+    });
 }
 
 function getUsername(callback) {
-	var url = 'https://api.spotify.com/v1/me';
-	$.ajax(url, {
-		dataType: 'json',
-		headers: {
-			'Authorization': 'Bearer ' + g_access_token
-		},
-		success: function(r) {
-			callback(r.id);
-		},
-		error: function(r) {
-			callback(null);
-		}
-	});
+    var url = 'https://api.spotify.com/v1/me';
+    $.ajax(url, {
+        dataType: 'json',
+        headers: {
+            'Authorization': 'Bearer ' + g_access_token
+        },
+        success: function(r) {
+            callback(r.id);
+        },
+        error: function(r) {
+            callback(null);
+        }
+    });
 }
 
 function createPlaylist(username, name, callback) {
-	var url = 'https://api.spotify.com/v1/users/' + username + '/playlists';
-	$.ajax(url, {
-		type: 'POST',
-		data: JSON.stringify({
-			'name': name,
-			'public': false
-		}),
-		dataType: 'json',
-		headers: {
-			'Authorization': 'Bearer ' + g_access_token,
-			'Content-Type': 'application/json'
-		},
-		success: function(r) {
-			callback(r.id);
-		},
-		error: function(r) {
-			callback(null);
-		}
-	});
+    var url = 'https://api.spotify.com/v1/users/' + username + '/playlists';
+    $.ajax(url, {
+        type: 'POST',
+        data: JSON.stringify({
+            'name': name,
+            'public': false
+        }),
+        dataType: 'json',
+        headers: {
+            'Authorization': 'Bearer ' + g_access_token,
+            'Content-Type': 'application/json'
+        },
+        success: function(r) {
+            callback(r.id);
+        },
+        error: function(r) {
+            callback(null);
+        }
+    });
 }
 
 function addTracksToPlaylist(username, playlist, tracks, start, callback) {
-		var maxTracksPerPlaylistAdd = 100;
-	var url = 'https://api.spotify.com/v1/users/' + username +
-		'/playlists/' + playlist +
-		'/tracks';
-		var thisTracks = tracks.slice(start, start + maxTracksPerPlaylistAdd);
-	$.ajax(url, {
-		type: 'POST',
-		data: JSON.stringify(thisTracks),
-		dataType: 'json',
-				processData:false,
-		headers: {
-			'Authorization': 'Bearer ' + g_access_token,
-			'Content-Type': 'application/json'
-		},
-		success: function(r) {
-						if (start + maxTracksPerPlaylistAdd >= tracks.length) {
-								callback('good');
-						} else {
-								status(Math.round(100 * start / tracks.length)  + "% saved");
-								addTracksToPlaylist(username, playlist, tracks, start + maxTracksPerPlaylistAdd, callback);
-						}
-		},
-		error: function(r, status, err) {
-			callback(null);
-		}
-	});
+        var maxTracksPerPlaylistAdd = 100;
+    var url = 'https://api.spotify.com/v1/users/' + username +
+        '/playlists/' + playlist +
+        '/tracks';
+        var thisTracks = tracks.slice(start, start + maxTracksPerPlaylistAdd);
+    $.ajax(url, {
+        type: 'POST',
+        data: JSON.stringify(thisTracks),
+        dataType: 'json',
+                processData:false,
+        headers: {
+            'Authorization': 'Bearer ' + g_access_token,
+            'Content-Type': 'application/json'
+        },
+        success: function(r) {
+                        if (start + maxTracksPerPlaylistAdd >= tracks.length) {
+                                callback('good');
+                        } else {
+                                status(Math.round(100 * start / tracks.length)  + "% saved");
+                                addTracksToPlaylist(username, playlist, tracks, start + maxTracksPerPlaylistAdd, callback);
+                        }
+        },
+        error: function(r, status, err) {
+            callback(null);
+        }
+    });
 }
 
 function status(msg) {
-		$("#status").text(msg);
+        $("#status").text(msg);
 }
 
 function doit() {
-	// parse hash
-	var hash = location.hash.replace(/#/g, '');
-	var all = hash.split('&');
-		var maxTracks = 10;
-	var args = {};
-	all.forEach(function(keyvalue) {
-		var idx = keyvalue.indexOf('=');
-		var key = keyvalue.substring(0, idx);
-		var val = keyvalue.substring(idx + 1);
-		args[key] = val;
-	});
+    // parse hash
+    var hash = location.hash.replace(/#/g, '');
+    var all = hash.split('&');
+        var maxTracks = 10;
+    var args = {};
+    all.forEach(function(keyvalue) {
+        var idx = keyvalue.indexOf('=');
+        var key = keyvalue.substring(0, idx);
+        var val = keyvalue.substring(idx + 1);
+        args[key] = val;
+    });
 
-	if (typeof(args['access_token']) != 'undefined') {
-		// got access token
-		g_access_token = args['access_token'];
-	}
+    if (typeof(args['access_token']) != 'undefined') {
+        // got access token
+        g_access_token = args['access_token'];
+    }
 
-	g_name = localStorage.getItem('createplaylist-name');
-	g_tracks = JSON.parse(localStorage.getItem('createplaylist-tracks'));
-	g_artist = localStorage.getItem('createplaylist-artist');
+    g_name = localStorage.getItem('createplaylist-name');
+    g_tracks = JSON.parse(localStorage.getItem('createplaylist-tracks'));
+    g_artist = localStorage.getItem('createplaylist-artist');
 
-	var remaining = g_tracks.length;
-	var tracks = [];
-	_.each(g_tracks, function(song, which) {
-			searchForSpotifySong(g_artist, song, function(ssong) {
-					remaining--;
-					tracks[which] = ssong.tracks.items[0];
-					if (remaining <= 0) {
-							var tids = [];
-							_.each(tracks, function(track) {
-									if (track) {
-											console.log(track.name);
-											tids.push(track.uri);
-									}
-							});
+    var remaining = g_tracks.length;
+    var tracks = [];
+    _.each(g_tracks, function(song, which) {
+            searchForSpotifySong(g_artist, song, function(ssong) {
+                    remaining--;
+                    tracks[which] = ssong.tracks.items[0];
+                    if (remaining <= 0) {
+                            var tids = [];
+                            _.each(tracks, function(track) {
+                                    if (track) {
+                                            console.log(track.name);
+                                            tids.push(track.uri);
+                                    }
+                            });
 
-							if (tids.length > 0) {
-									onTracksFetched(tids);
-							} else {
-									error("Sorry, can't find those tracks in Spotify");
-							}
-					}
-			});
-	});
+                            if (tids.length > 0) {
+                                    onTracksFetched(tids);
+                            } else {
+                                    error("Sorry, can't find those tracks in Spotify");
+                            }
+                    }
+            });
+    });
 
-	function onTracksFetched(tracks) {
-		getUsername(function(username) {
-			createPlaylist(username, g_name, function(playlist) {
-							if (playlist) {
-									addTracksToPlaylist(username, playlist, tracks, 0, function(ok) {
-											if (ok) {
-													$('#playlistlink').attr('href', 'spotify:user:'+username+':playlist:'+playlist);
-													$("#title").text(g_name);
-													$('#done').show();
-													$('#creating').hide();
-											} else {
-													$('#error').show();
-													$('#creating').hide();
-											}
-									});
-							} else {
-									$("#error").show();
-									$('#creating').hide();
-							}
-		});
-	});
-	}
+    function onTracksFetched(tracks) {
+        getUsername(function(username) {
+            createPlaylist(username, g_name, function(playlist) {
+                            if (playlist) {
+                                    addTracksToPlaylist(username, playlist, tracks, 0, function(ok) {
+                                            if (ok) {
+                                                    $('#playlistlink').attr('href', 'spotify:user:'+username+':playlist:'+playlist);
+                                                    $("#title").text(g_name);
+                                                    $('#done').show();
+                                                    $('#creating').hide();
+                                            } else {
+                                                    $('#error').show();
+                                                    $('#creating').hide();
+                                            }
+                                    });
+                            } else {
+                                    $("#error").show();
+                                    $('#creating').hide();
+                            }
+        });
+    });
+    }
 }
 
 </script>
 <style type="text/css">
 
-	body {
-		background-color: #333;
-		color: #fff;
-				text-align:center;
-				font-size:24px;
-	}
+    body {
+        background-color: #333;
+        color: #fff;
+                text-align:center;
+                font-size:24px;
+    }
 
-	.site-wrapper {
-				margin:20px;
-	}
+    .site-wrapper {
+                margin:20px;
+    }
 
 
-		#info {
-				margin:20px;
-				margin-top:30px;
-				margin-bottom:40px;
-		}
+        #info {
+                margin:20px;
+                margin-top:30px;
+                margin-bottom:40px;
+        }
 </style>
 </head>
 <body onload="doit()">
-	<div class="container site-wrapper">
-		<div class="site-wrapper-inner">
-			<div id="creating" style="text-align: center;">
-				<h1>Creating playlist...</h1>
-								<div id="status" style="text-align: center;"> </div>
-			</div>
-			<div id="done" style="display: none;">
-				<h1 class='text-success' >Playlist saved to Spotify</h1>
-				<div id='info'> Playlist saved as: <div id="title" class="text-info"> </div></div>
-				<p>
-					<a class="btn btn-lg btn-primary btn-success" id="playlistlink">
-						Open playlist in Spotify
-					</a>
-				</p>
-			</div>
-			<div id="error" style="display: none;">
-				<h1 class='text-warning' >Trouble!</h1>
-				<div id='einfo'> Trouble saving that playlist.</div>
-			</div>
-		</div>
-	</div>
+    <div class="container site-wrapper">
+        <div class="site-wrapper-inner">
+            <div id="creating" style="text-align: center;">
+                <h1>Creating playlist...</h1>
+                                <div id="status" style="text-align: center;"> </div>
+            </div>
+            <div id="done" style="display: none;">
+                <h1 class='text-success' >Playlist saved to Spotify</h1>
+                <div id='info'> Playlist saved as: <div id="title" class="text-info"> </div></div>
+                <p>
+                    <a class="btn btn-lg btn-primary btn-success" id="playlistlink">
+                        Open playlist in Spotify
+                    </a>
+                </p>
+            </div>
+            <div id="error" style="display: none;">
+                <h1 class='text-warning' >Trouble!</h1>
+                <div id='einfo'> Trouble saving that playlist.</div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
