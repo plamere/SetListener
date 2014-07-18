@@ -97,8 +97,8 @@ function searchSetlist(artistName, callback) {
         });
 }
 
-function getArtistEvents(artistName, artist, callback) {
-    var url = 'http://api.setlist.fm/rest/0.1/artist/' + artist['@mbid'] + '/setlists.json';
+function getArtistEvents(artistName, mbid, callback) {
+    var url = 'http://api.setlist.fm/rest/0.1/artist/' + mbid + '/setlists.json';
     $.getJSON(fwdQuery, { q:url})
         .success(function(data) {
             info("");
@@ -109,7 +109,7 @@ function getArtistEvents(artistName, artist, callback) {
         });
 }
 
-function searchForArtist() {
+function searchForArtistOld() {
     var artistName = $("#source").val();
     $("#main").hide();
     info("Searching for " + artistName);
@@ -137,8 +137,8 @@ function searchForArtist() {
             }
             if (artist) {
                 info("Getting recent shows for " + artistName);
-                getArtistEvents(artistName, artist, function(data) {
-                    showEvents(artist, data);
+                getArtistEvents(artistName, artist['@mbid'], function(data) {
+                    showEvents(artistName, data);
                 });
             }
         } else {
@@ -147,12 +147,40 @@ function searchForArtist() {
     });
 }
 
+function searchForArtist() {
+    var artistName = $("#source").val();
+    $("#main").hide();
+    info("Searching for " + artistName);
+    $.getJSON('http://developer.echonest.com/api/v4/artist/search',
+        {
+            api_key: "ECLJI0GPBJVEXSZDT",
+            name:artistName,
+            bucket:'id:musicbrainz',
+            limit:true
+        }, function(data) {
+            var response = data.response;
+            if (response.status.code == 0 && response.artists.length > 0) {
+                var mbid = response.artists[0].foreign_ids[0].foreign_id;
+                var name = response.artists[0].name;
+                mbid = mbid.split(':')[2];
+                info("Getting recent shows for " + name);
+                getArtistEvents(name,  mbid, function(data) {
+                    showEvents(name, data);
+                });
+            } else {
+                searchForArtistOld();
+            }
+        }).error(function() {
+            searchForArtistOld();
+        });
+}
 
-function showEvents(artist, setdata) {
+
+function showEvents(artistName, setdata) {
     var show = getBestShow(setdata);
     if (show) {
         $("#main").show();
-        var title = getTitleFromShow(artist, show);
+        var title = getTitleFromShow(artistName, show);
         var songs = getSongNamesFromShow(show);
         var url = show.url;
         $("#show-title").text(title).attr('href', url);
@@ -164,15 +192,15 @@ function showEvents(artist, setdata) {
             var li = $("<div>").text(s);
             list.append(li);
         });
-        curArtist = artist;
+        curArtist = artistName;
         curSongs = songs;
     } else {
-        error("Can't find any shows with songs for " + artist["@name"]);
+        error("Can't find any shows with songs for " + artistName);
     }
 }
 
-function getTitleFromShow(artist, show) {
-    return artist["@name"] + " at " + show.venue["@name"] + " on " +
+function getTitleFromShow(artistName, show) {
+    return artistName + " at " + show.venue["@name"] + " on " +
         parseEventDate(show["@eventDate"]);
 }
 
@@ -215,7 +243,7 @@ function getSongNamesFromShow(show) {
 function savePlaylist() {
     localStorage.setItem('createplaylist-tracks', JSON.stringify(curSongs));
     localStorage.setItem('createplaylist-name', curTitle);
-    localStorage.setItem('createplaylist-artist', curArtist['@name']);
+    localStorage.setItem('createplaylist-artist', curArtist);
     loginWithSpotify();
 }
 
