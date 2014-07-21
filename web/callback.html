@@ -148,7 +148,8 @@ function doit() {
                 if (tids.length > 0) {
                     onTracksFetched(tids);
                 } else {
-                    error("Sorry, can't find those tracks in Spotify");
+                    $('#error').show();
+                    $('#creating').hide();
                 }
             }
         });
